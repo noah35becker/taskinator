@@ -13,6 +13,8 @@ var tasksCompletedEl = document.querySelector('#tasks-completed');
 
 var taskIDCounter = 0;
 
+const tasks = [];
+
 
 function editTask(taskID){
     var taskSelected = document.querySelector('.task-item[data-task-id="' + taskID + '"]');
@@ -30,6 +32,13 @@ function completeEditTask(taskName, taskType, taskID){
 
     taskSelected.querySelector('h3.task-name').textContent = taskName;
     taskSelected.querySelector('span.task-type').textContent = taskType;
+    
+    tasks.forEach(elem => {
+        if (elem.id === parseInt(taskID)){
+            elem.name = taskName;
+            elem.type = taskType;
+        }
+    });
 
     formEl.removeAttribute('data-task-id');
     formEl.reset();
@@ -40,6 +49,13 @@ function completeEditTask(taskName, taskType, taskID){
 function deleteTask(taskID){
     var taskSelected = document.querySelector('.task-item[data-task-id="' + taskID + '"]');
     taskSelected.remove();
+
+    console.log(tasks);
+    for(i = 0; i < tasks.length; i++){
+        if (tasks[i].id === parseInt(taskID))
+            tasks.splice(i,1);
+    }
+    console.log(tasks);
 }
 
 
@@ -48,7 +64,8 @@ function taskFormHandler(event){
 
     var taskDataObject = {
         name: taskNameInput.value,
-        type: taskTypeInput.value
+        type: taskTypeInput.value,
+        status: 'to do', 
     }
 
     if(!taskDataObject.name || !taskDataObject.type){
@@ -59,7 +76,7 @@ function taskFormHandler(event){
     var isEdit = formEl.hasAttribute('data-task-id');
     if (isEdit){
         var taskID = formEl.getAttribute('data-task-id');
-        completeEditTask(taskDataObject.name, taskDataObject.type, taskID);
+        completeEditTask(taskNameInput.value, taskTypeInput.value, taskID);
     }else
         createTaskEl(taskDataObject);
 }
@@ -94,6 +111,12 @@ function taskStatusChangeHandler(event){
         tasksInProgressEl.appendChild(taskSelected);
     if (statusValue === 'completed')
         tasksCompletedEl.appendChild(taskSelected);
+
+    tasks.forEach(elem => {
+        if (elem.id === parseInt(taskID)){
+            elem.status = statusValue;
+        }
+    });
 }
 
 
@@ -147,6 +170,9 @@ function createTaskEl(taskDataObj){
     listItemEl.appendChild(taskInfoEl);
     listItemEl.appendChild(taskActionsEl);
     tasksToDoEl.appendChild(listItemEl);
+    taskDataObj.id = taskIDCounter;
+
+    tasks.push(taskDataObj);
 
     taskIDCounter++;
     formEl.reset();
