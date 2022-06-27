@@ -39,6 +39,7 @@ function completeEditTask(taskName, taskType, taskID){
             elem.type = taskType;
         }
     });
+    saveTasks();
 
     formEl.removeAttribute('data-task-id');
     formEl.reset();
@@ -50,12 +51,11 @@ function deleteTask(taskID){
     var taskSelected = document.querySelector('.task-item[data-task-id="' + taskID + '"]');
     taskSelected.remove();
 
-    console.log(tasks);
     for(i = 0; i < tasks.length; i++){
         if (tasks[i].id === parseInt(taskID))
             tasks.splice(i,1);
     }
-    console.log(tasks);
+    saveTasks();
 }
 
 
@@ -79,6 +79,7 @@ function taskFormHandler(event){
         completeEditTask(taskNameInput.value, taskTypeInput.value, taskID);
     }else
         createTaskEl(taskDataObject);
+    
 }
 
 
@@ -117,6 +118,7 @@ function taskStatusChangeHandler(event){
             elem.status = statusValue;
         }
     });
+    saveTasks();
 }
 
 
@@ -173,9 +175,15 @@ function createTaskEl(taskDataObj){
     taskDataObj.id = taskIDCounter;
 
     tasks.push(taskDataObj);
+    saveTasks();
 
     taskIDCounter++;
     formEl.reset();
+}
+
+
+function saveTasks(){
+    localStorage.setItem('tasks', JSON.stringify(tasks));
 }
 
 
