@@ -13,6 +13,8 @@ var tasksCompletedEl = document.querySelector('#tasks-completed');
 
 var taskIDCounter = 0;
 
+var tasks = [];
+
 
 function editTask(taskID){
     var taskSelected = document.querySelector('.task-item[data-task-id="' + taskID + '"]');
@@ -30,6 +32,14 @@ function completeEditTask(taskName, taskType, taskID){
 
     taskSelected.querySelector('h3.task-name').textContent = taskName;
     taskSelected.querySelector('span.task-type').textContent = taskType;
+    
+    tasks.forEach(elem => {
+        if (elem.id === parseInt(taskID)){
+            elem.name = taskName;
+            elem.type = taskType;
+        }
+    });
+    saveTasks();
 
     formEl.removeAttribute('data-task-id');
     formEl.reset();
@@ -40,6 +50,12 @@ function completeEditTask(taskName, taskType, taskID){
 function deleteTask(taskID){
     var taskSelected = document.querySelector('.task-item[data-task-id="' + taskID + '"]');
     taskSelected.remove();
+
+    for(i = 0; i < tasks.length; i++){
+        if (tasks[i].id === parseInt(taskID))
+            tasks.splice(i,1);
+    }
+    saveTasks();
 }
 
 
@@ -48,7 +64,8 @@ function taskFormHandler(event){
 
     var taskDataObject = {
         name: taskNameInput.value,
-        type: taskTypeInput.value
+        type: taskTypeInput.value,
+        status: 'to do', 
     }
 
     if(!taskDataObject.name || !taskDataObject.type){
@@ -59,9 +76,10 @@ function taskFormHandler(event){
     var isEdit = formEl.hasAttribute('data-task-id');
     if (isEdit){
         var taskID = formEl.getAttribute('data-task-id');
-        completeEditTask(taskDataObject.name, taskDataObject.type, taskID);
+        completeEditTask(taskNameInput.value, taskTypeInput.value, taskID);
     }else
         createTaskEl(taskDataObject);
+    
 }
 
 
@@ -73,8 +91,7 @@ function taskButtonHandler(event){
         taskID = targetEl.getAttribute('data-task-id');
         editTask(taskID);
     }
-
-    if (targetEl.matches('.delete-btn')){
+    else if (targetEl.matches('.delete-btn')){
         taskID = targetEl.getAttribute('data-task-id');
         deleteTask(taskID);
     }
@@ -90,10 +107,16 @@ function taskStatusChangeHandler(event){
 
     if (statusValue === 'to do')
         tasksToDoEl.appendChild(taskSelected);
-    if (statusValue === 'in progress')
+    else if (statusValue === 'in progress')
         tasksInProgressEl.appendChild(taskSelected);
-    if (statusValue === 'completed')
+    else if (statusValue === 'completed')
         tasksCompletedEl.appendChild(taskSelected);
+
+    tasks.forEach(elem => {
+        if (elem.id === parseInt(taskID))
+            elem.status = statusValue;
+    });
+    saveTasks();
 }
 
 
@@ -146,15 +169,55 @@ function createTaskEl(taskDataObj){
 
     listItemEl.appendChild(taskInfoEl);
     listItemEl.appendChild(taskActionsEl);
-    tasksToDoEl.appendChild(listItemEl);
+    taskDataObj.id = taskIDCounter;
+    
+    var listItemStatus = listItemEl.querySelector('select[name="status-change"]');
+    if (taskDataObj.status === 'to do'){
+        listItemStatus.selectedIndex = 0;
+        tasksToDoEl.appendChild(listItemEl);
+    }
+    else if (taskDataObj.status === 'in progress'){
+        listItemStatus.selectedIndex = 1;
+        tasksInProgressEl.appendChild(listItemEl);
+    }
+    else if (taskDataObj.status === 'completed'){
+        listItemStatus.selectedIndex = 2;
+        tasksCompletedEl.appendChild(listItemEl);
+    }
+
+    tasks.push(taskDataObj);
+    saveTasks();
 
     taskIDCounter++;
     formEl.reset();
 }
 
 
+function saveTasks(){
+    console.log('saveTasks is running\n', tasks);
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+
+function loadTasks(){
+    var savedTasks = localStorage.getItem('tasks');
+
+    if(!savedTasks)
+        return false;
+   
+    savedTasks = JSON.parse(savedTasks);
+
+    savedTasks.forEach(elem => {
+        createTaskEl(elem);
+    });
+}
+
 
 formEl.addEventListener('submit', taskFormHandler);
 
 pageContentEl.addEventListener('click', taskButtonHandler);
 pageContentEl.addEventListener('change', taskStatusChangeHandler);
+
+
+//Load tasks upon page load
+loadTasks();
